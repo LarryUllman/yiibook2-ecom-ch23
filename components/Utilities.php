@@ -1,21 +1,29 @@
 <?php
 namespace app\components;
+use Yii;
+use app\models\Cart;
 
 class Utilities {
 
 	public static function getCart() {
 
 		// Get or create the cart session ID:
-		if (isset(Yii::app()->request->cookies['SESSION'])) {
-			$sess = Yii::app()->request->cookies['SESSION'];
+		$cookies = Yii::$app->request->cookies;
+		if ($cookies->has('SESSION')) {
+			$sess = $cookies['SESSION']->value;
 		} else {
 			$sess = bin2hex(openssl_random_pseudo_bytes(16));
 		}
 
 		// Send the cookie:
-		Yii::app()->request->cookies['SESSION'] = new CHttpCookie('SESSION', $sess, array('expire' => time()+(60*60*24*30)));
+		$cookies = Yii::$app->response->cookies;
+		$cookies->add(new \yii\web\Cookie([
+			'name' => 'SESSION',
+			'value' => $sess,
+			'expire' => time()+(60*60*24*30)
+		]));
 
-		$cart=Cart::model()->find('customer_session_id=:sess', array(':sess' => $sess));
+		$cart=Cart::find()->where(['customer_session_id' => $sess])->one();
 		if($cart===null) {
 			$cart = new Cart();
 			$cart->customer_session_id = $sess;
