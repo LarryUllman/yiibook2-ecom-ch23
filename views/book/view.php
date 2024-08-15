@@ -1,7 +1,7 @@
 <?php
 
 use yii\helpers\Html;
-use yii\widgets\DetailView;
+use app\components\Utilities;
 
 /** @var yii\web\View $this */
 /** @var app\models\Book $model */
@@ -15,28 +15,35 @@ $this->params['breadcrumbs'][] = $this->title;
 
     <h1><?= Html::encode($this->title) ?></h1>
 
+    <img src="/images/<?= $model->id; ?>.jpg"><br />
+
     <p>
-        <?= Html::a('Update', ['update', 'id' => $model->id], ['class' => 'btn btn-primary']) ?>
-        <?= Html::a('Delete', ['delete', 'id' => $model->id], [
-            'class' => 'btn btn-danger',
-            'data' => [
-                'confirm' => 'Are you sure you want to delete this item?',
-                'method' => 'post',
-            ],
-        ]) ?>
+        <b><?= $model->getAttributeLabel('title'); ?>:</b>
+        <?= Html::encode($model->title); ?>
     </p>
 
-    <?= DetailView::widget([
-        'model' => $model,
-        'attributes' => [
-            'id',
-            'title',
-            'price',
-            'description:ntext',
-            'author',
-            'filename',
-            'date_published',
-        ],
-    ]) ?>
+    <p>
+        <b><?= $model->getAttributeLabel('price'); ?>:</b>
+        <?= Utilities::formatAmount($model->price); ?>
+    </p>
+
+    <p>
+        <b><?= $model->getAttributeLabel('author'); ?>:</b>
+        <?= Html::encode($model->author); ?>
+    </p>
+
+    <p>
+        <b><?= $model->getAttributeLabel('date_published'); ?>:</b>
+        <?= Utilities::formatDate($model->date_published); ?>
+    </p>
+
+    <p>
+        <b><?= $model->getAttributeLabel('description'); ?>:</b>
+        <?= Html::encode($model->description); ?>
+    </p>
+
+    <p>
+        <?= Html::a('Add to Cart', ['/cart/add', 'id' => $model->id], ['class' => 'btn btn-primary']) ?>
+    </p>
 
 </div>
