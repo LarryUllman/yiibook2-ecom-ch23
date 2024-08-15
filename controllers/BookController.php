@@ -4,6 +4,7 @@ namespace app\controllers;
 
 use app\models\Book;
 use app\models\BookSearch;
+use Yii;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
@@ -117,6 +118,25 @@ class BookController extends Controller
     }
 
     /**
+	 * Sends a particular title to the browser
+	 * @param int $id the ID of the book to be downloaded
+	 */
+	public function actionDownload($id)
+	{
+        $model = $this->findModel($id);
+
+		// TODO Add code to verify right to download!
+
+		// Get the book information:
+        $file = Yii::getAlias('@app/assets/pdfs/' . $id . '.pdf');
+        $title = $model->filename;
+
+		// Send the file:
+        return \Yii::$app->response->sendFile($file, $title);
+
+	}
+
+    /**
      * Finds the Book model based on its primary key value.
      * If the model is not found, a 404 HTTP exception will be thrown.
      * @param int $id ID
@@ -131,4 +151,5 @@ class BookController extends Controller
 
         throw new NotFoundHttpException('The requested page does not exist.');
     }
+
 }
