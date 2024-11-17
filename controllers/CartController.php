@@ -3,10 +3,12 @@
 namespace app\controllers;
 
 use app\models\Cart;
+use app\models\CartContent;
 use app\models\CartSearch;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
+use app\components\Utilities;
 
 /**
  * CartController implements the CRUD actions for Cart model.
@@ -24,7 +26,7 @@ class CartController extends Controller
                 'verbs' => [
                     'class' => VerbFilter::className(),
                     'actions' => [
-                        'delete' => ['POST'],
+                        'delete' => ['GET'],
                     ],
                 ],
             ]
@@ -53,10 +55,49 @@ class CartController extends Controller
      * @return string
      * @throws NotFoundHttpException if the model cannot be found
      */
-    public function actionView($id)
+    public function actionAdd($id)
     {
+        // Need the cart:
+        $cart = Utilities::getCart();
+
+		// Check for the item already being in the cart:
+        $item = CartContent::find()
+            ->where(['cart_id' => $cart->id, 'book_id' => $id])
+            ->one();
+
+        // If the item already exists, add another:
+        if($item!==null) {
+            $item->quantity = $item->quantity + 1;
+        } else { // New item:
+            $item = new CartContent();
+            $item->cart_id = $cart->id;
+            $item->book_id = $id;
+            $item->quantity = 1;
+        }
+
+        // Save the item:
+        $item->save();
+
+        // Show the cart contents:
+        return $this->render('view',array(
+            'model'=>$cart
+        ));
+}
+
+    /**
+     * Shows the a single Cart model.
+     * @param int $id ID
+     * @return string
+     * @throws NotFoundHttpException if the model cannot be found
+     */
+    public function actionView()
+    {
+
+        // Need the cart:
+        $cart = Utilities::getCart();
+
         return $this->render('view', [
-            'model' => $this->findModel($id),
+            'model' => $cart,
         ]);
     }
 
@@ -103,18 +144,24 @@ class CartController extends Controller
     }
 
     /**
-     * Deletes an existing Cart model.
-     * If deletion is successful, the browser will be redirected to the 'index' page.
-     * @param int $id ID
+     * Deletes a cart item (a single CartContent row).
+     * @param int $book_id ID
      * @return \yii\web\Response
      * @throws NotFoundHttpException if the model cannot be found
      */
-    public function actionDelete($id)
-    {
-        $this->findModel($id)->delete();
+public function actionDelete($book_id)
+{
 
-        return $this->redirect(['index']);
-    }
+    // Need the cart:
+    $cart = Utilities::getCart();
+    $cmd = \Yii::$app->db->createCommand()->delete('cart_content', ['cart_id' => $cart->id, 'book_id' => $book_id]);
+    $cmd->execute();
+    
+    return $this->render('view',array(
+        'model'=>$cart
+    ));
+
+}
 
     /**
      * Finds the Cart model based on its primary key value.
