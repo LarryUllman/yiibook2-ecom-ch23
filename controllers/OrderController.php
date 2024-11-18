@@ -4,9 +4,12 @@ namespace app\controllers;
 
 use app\models\Order;
 use app\models\OrderSearch;
+use app\models\Customer;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
+use yii\web\ForbiddenHttpException;
 use yii\filters\VerbFilter;
+use yii\db\Query;
 
 /**
  * OrderController implements the CRUD actions for Order model.
@@ -67,18 +70,39 @@ class OrderController extends Controller
      */
     public function actionCreate()
     {
-        $model = new Order();
 
-        if ($this->request->isPost) {
-            if ($model->load($this->request->post()) && $model->save()) {
-                return $this->redirect(['view', 'id' => $model->id]);
-            }
-        } else {
-            $model->loadDefaultValues();
+        $session = \Yii::$app->session;
+        $session->open();
+        $session['payment_id'] = 1;
+
+        // Must have processed a charge before coming here:
+        if (!isset(\Yii::$app->session['payment_id'])) {
+            throw new ForbiddenHttpException('You have not made a purchase.');
         }
 
-        return $this->render('create', [
-            'model' => $model,
+    	// Get the payment info:
+        $q = new Query();
+        $payment = $q->select('*')
+        ->from('payment')
+        ->where(['id' => \Yii::$app->session['payment_id']])
+        ->one();
+
+        if (!$payment) {
+            throw new ForbiddenHttpException('You have not made a purchase.');
+        }
+
+        // Fetch the customer, if existing:
+        $customer = Customer::findOne(['email' => $payment['email']]);
+
+        // If no customer, create a new one:
+        if($customer===null) {
+            $customer = new Customer;
+            $customer->email = $payment['email'];
+            $customer->save();
+        }
+
+        return $this->render('view', [
+            'payment' => $payment,
         ]);
     }
 
