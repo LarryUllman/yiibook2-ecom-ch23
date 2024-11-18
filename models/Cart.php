@@ -78,4 +78,16 @@ class Cart extends \yii\db\ActiveRecord
         ->scalar();
     }
 
+    // Clears out a cart.
+    public function clear()
+	{
+		$cmd = \Yii::$app->db->createCommand('DELETE FROM cart_content WHERE cart_id=:cart_id');
+		$cart_id = $this->id;
+		$cmd->bindParam(':cart_id', $cart_id, PDO::PARAM_INT);
+		$cmd->execute();
+		$cmd = \Yii::$app->db->createCommand('DELETE FROM cart WHERE id=:cart_id');
+		$cmd->bindParam(':cart_id', $cart_id, PDO::PARAM_INT);
+		$cmd->execute();
+	}
+
 }

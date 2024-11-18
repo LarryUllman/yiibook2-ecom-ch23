@@ -12,6 +12,14 @@ $config = [
         '@bower' => '@vendor/bower-asset',
         '@npm'   => '@vendor/npm-asset',
     ],
+    'modules' => [
+        'pay' => [
+            'class' => 'app\modules\pay\Module',
+            'publishable_key' => 'pk_test_XXX',
+            'secret_key' => 'sk_test_XXX',
+            'redirectOnSuccess' => '/order/create'
+        ],
+    ],
     'components' => [
         'request' => [
             // !!! insert a secret key in the following (if it is empty) - this is required by cookie validation
