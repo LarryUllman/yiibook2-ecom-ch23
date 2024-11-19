@@ -10,6 +10,7 @@ use yii\web\NotFoundHttpException;
 use yii\web\ForbiddenHttpException;
 use yii\filters\VerbFilter;
 use yii\db\Query;
+use app\components\Utilities;
 
 /**
  * OrderController implements the CRUD actions for Order model.
@@ -71,9 +72,6 @@ class OrderController extends Controller
     public function actionCreate()
     {
 
-        $session = \Yii::$app->session;
-        $session->open();
-        $session['payment_id'] = 1;
 
         // Must have processed a charge before coming here:
         if (!isset(\Yii::$app->session['payment_id'])) {
@@ -101,8 +99,32 @@ class OrderController extends Controller
             $customer->save();
         }
 
+        // Record the order:
+        $order=new Order;
+        $order->customer_id = $customer->id;
+        $order->payment_id = $payment['id'];
+        $order->total = $payment['amount'];
+        $order->date_entered = $payment['created_at'];
+        $order->save();
+
+        // Store the order contents in the order contents table:
+        $cart = Utilities::getCart();
+        $cmd = \Yii::$app->db->createCommand('INSERT INTO order_content 
+        (order_id, book_id, quantity, price_per) 
+        SELECT :order_id, cc.book_id, cc.quantity, b.price 
+        FROM cart_content AS cc, book AS b 
+        WHERE (b.id=cc.book_id) AND (cc.cart_id=:cart_id)');
+        $order_id = $order->id;
+        $cart_id = $cart->id;
+        $cmd->bindParam(':order_id', $order_id, \PDO::PARAM_INT);
+        $cmd->bindParam(':cart_id', $cart_id, \PDO::PARAM_INT);
+        $cmd->execute();
+
+        // Clear the cart:
+        $cart->clear();
+
         return $this->render('view', [
-            'payment' => $payment,
+            'model' => $order,
         ]);
     }
 

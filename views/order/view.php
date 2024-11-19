@@ -2,11 +2,12 @@
 
 use yii\helpers\Html;
 use yii\widgets\DetailView;
+use app\components\Utilities;
 
 /** @var yii\web\View $this */
 /** @var app\models\Order $model */
 
-$this->title = $model->id;
+$this->title = 'Order Confirmation #' . $model->id;
 $this->params['breadcrumbs'][] = ['label' => 'Orders', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 \yii\web\YiiAsset::register($this);
@@ -15,26 +16,32 @@ $this->params['breadcrumbs'][] = $this->title;
 
     <h1><?= Html::encode($this->title) ?></h1>
 
-    <p>
-        <?= Html::a('Update', ['update', 'id' => $model->id], ['class' => 'btn btn-primary']) ?>
-        <?= Html::a('Delete', ['delete', 'id' => $model->id], [
-            'class' => 'btn btn-danger',
-            'data' => [
-                'confirm' => 'Are you sure you want to delete this item?',
-                'method' => 'post',
-            ],
-        ]) ?>
-    </p>
-
     <?= DetailView::widget([
         'model' => $model,
         'attributes' => [
-            'id',
-            'customer_id',
-            'payment_id',
-            'total',
-            'date_entered',
+            [
+                'label' => 'Order Number',
+                'value' => $model->id,
+            ],
+            'customer.email',
+            [
+                'label' => 'Total',
+                'value' => Utilities::formatAmount($model->total),
+            ],
+            [
+                'label' => 'Order Date',
+                'value' => Utilities::formatDate($model->date_entered),
+            ],
         ],
     ]) ?>
+
+    <h2>Download Purchases</h2>
+    <ul>
+    <?php $items = $model->orderContents;
+    foreach ($items as $item) {
+        echo '<li>' . HTML::a($item->book->title, ['/book/download', 'id' => $item->book_id]) . '</li>';
+    }
+    ?>
+    </ul>
 
 </div>
